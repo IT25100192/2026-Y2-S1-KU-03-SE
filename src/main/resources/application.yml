@@ -1,0 +1,106 @@
+server:
+  port: 4000
+  servlet:
+    session:
+      cookie:
+        name: svl_session
+        http-only: true
+        same-site: lax
+        max-age: 7d
+
+spring:
+  application:
+    name: starvoice-lanka
+  profiles:
+    active: mssql
+  servlet:
+    multipart:
+      max-file-size: 25MB
+      max-request-size: 25MB
+  thymeleaf:
+    cache: false
+    mode: HTML
+
+starvoice:
+  free-votes-per-round: 5
+  vote-price-lkr: 25
+  notify-provider: console
+  sendgrid-api-key: ""
+  sendgrid-from: no-reply@starvoice.lk
+  twilio-account-sid: ""
+  twilio-auth-token: ""
+  twilio-from-number: ""
+  default-country-code: "+94"
+  notify-max-attempts: 3
+  payment-webhook-secret: starvoice-dev-webhook-secret
+  media-max-bytes: 26214400 # 25 MB
+  media-dir: uploads/performances
+  fraud-shared-ip-voters: 3
+  fraud-burst-per-minute: 5
+  fraud-fresh-account-seconds: 60
+  vote-rate-limit-per-minute: 20
+  workers-enabled: true
+
+---
+# Default Profile: H2 (Persistent Local File Storage & Testing)
+spring:
+  config:
+    activate:
+      on-profile: h2
+  datasource:
+    url: jdbc:h2:file:./data/starvoice;DB_CLOSE_DELAY=-1;AUTO_SERVER=TRUE;MODE=MSSQLServer
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: ""
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+
+---
+# Profile: mssql (Microsoft SQL Server / SSMS)
+spring:
+  config:
+    activate:
+      on-profile: mssql
+  datasource:
+    url: jdbc:sqlserver://localhost:1433;databaseName=star;encrypt=false;trustServerCertificate=true
+    driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
+    username: sa
+    password: "5738"
+  jpa:
+    database-platform: org.hibernate.dialect.SQLServerDialect
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+
+---
+# Profile: mysql (MySQL / MariaDB / XAMPP)
+spring:
+  config:
+    activate:
+      on-profile: mysql
+  datasource:
+    url: jdbc:mysql://localhost:3306/starvoice_lanka?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+    driver-class-name: com.mysql.cj.Driver
+    username: root
+    password: ""
+  jpa:
+    database-platform: org.hibernate.dialect.MySQLDialect
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true

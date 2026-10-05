@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout/head :: head('Home')}"></head>
+<body>
+<header th:replace="~{layout/head :: topbar}"></header>
+
+<main>
+  <div class="wrap">
+    <div th:replace="~{layout/head :: alerts}"></div>
+
+    <section class="hero">
+      <div th:if="${round != null}" class="onair">
+        <span class="pulse"></span>
+        <span th:text="${round.status.name() == 'OPEN' ? 'Voting open now' : helpers.titleCase(round.status.name())}">Status</span>
+      </div>
+      <h1>Sri Lanka picks its next <em>voice</em>.</h1>
+      <p>
+        <span th:if="${season != null}" th:text="${season.name} + '. '">Season 1. </span>
+        <th:block th:if="${round != null and round.status.name() == 'OPEN'}">
+          <span th:text="${round.name} + ' is live'">Round 1 is live</span>
+          <span th:if="${round.closesAt != null}" th:text="' until ' + ${helpers.dateTime(round.closesAt)}"> until 10:00 PM</span>.
+          Every verified account gets <span th:text="${freeVotesPerRound}">5</span> free votes per round.
+        </th:block>
+        <th:block th:if="${round != null and round.status.name() != 'OPEN'}">
+          <span th:text="${round.name} + ' is ' + ${helpers.titleCase(round.status.name()).toLowerCase()} + '.'">Round is closed.</span>
+        </th:block>
+        <th:block th:if="${round == null}">
+          No round is running at the moment. Check back when the next show airs.
+        </th:block>
+      </p>
+      <div class="btn-row">
+        <a th:if="${round != null and round.status.name() == 'OPEN'}" class="btn btn-live" th:href="@{'/vote/' + ${round.id}}">Vote now</a>
+        <a class="btn btn-ghost" th:href="@{/contestants}">Meet the contestants</a>
+      </div>
+    </section>
+
+    <div class="grid four" style="margin:28px 0">
+      <div class="card stat"><div class="label">Votes this round</div><div class="value gold" th:text="${helpers.number(breakdown.totalVotes)}">0</div></div>
+      <div class="card stat"><div class="label">People voting</div><div class="value" th:text="${helpers.number(breakdown.uniqueVoters)}">0</div></div>
+      <div class="card stat"><div class="label">Free / paid</div><div class="value cyan" th:text="${helpers.number(breakdown.freeVotes)} + ' / ' + ${helpers.number(breakdown.paidVotes)}">0 / 0</div></div>
+      <div class="card stat"><div class="label">Contestants left</div><div class="value magenta" th:text="${helpers.number(activeContestants)}">0</div></div>
+    </div>
+
+    <div class="grid two">
+      <div class="card">
+        <div class="split">
+          <h2 th:text="${round != null ? round.name : 'Leaderboard'}">Leaderboard</h2>
+          <span th:if="${round != null}" class="badge" th:classappend="${helpers.tone(round.status.name())}" th:text="${helpers.titleCase(round.status.name())}">Status</span>
+        </div>
+        <p class="faint">Live standing, updated as votes land.</p>
+        <div th:replace="~{partials/board :: board(${standings}, ${round != null and round.status.name() == 'OPEN' ? round.id : null})}"></div>
+      </div>
+
+      <div>
+        <div th:replace="~{partials/sponsors :: sponsors(${sponsors})}"></div>
+
+        <div class="card">
+          <h2>How voting works</h2>
+          <div class="kv"><span>Free votes per round</span><b th:text="${freeVotesPerRound}">5</b></div>
+          <div class="kv"><span>Extra votes</span><b th:text="${helpers.money(votePriceLKR)} + ' each'">LKR 25 each</b></div>
+          <div class="kv"><span>Maximum per submission</span><b>50</b></div>
+          <p class="faint" style="margin-top:14px">
+            Free votes reset every round. Paid votes come out of vote credits you buy in
+            advance, so a slow card never costs you the moment you were voting for.
+          </p>
+          <a class="btn btn-ghost btn-sm" th:href="@{/bundles}">See vote credit packs</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<footer th:replace="~{layout/foot :: foot}"></footer>
+</body>
+</html>

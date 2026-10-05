@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout/head :: head('Reset your password')}"></head>
+<body>
+<header th:replace="~{layout/head :: topbar}"></header>
+
+<main>
+  <div class="wrap">
+    <div th:replace="~{layout/head :: alerts}"></div>
+
+    <div class="card auth-card">
+      <h1 style="font-size:1.5rem">Reset your password</h1>
+      <p class="muted">Enter your email and we will send a reset code.</p>
+
+      <form method="post" th:action="@{/forgot}">
+        <div class="field">
+          <label for="email">Email</label>
+          <input id="email" name="email" type="email" required autofocus>
+        </div>
+        <button class="btn btn-primary" style="width:100%" type="submit">Send reset code</button>
+      </form>
+
+      <p class="faint" style="margin-top:16px">
+        Already have a code? <a th:href="@{/reset}">Enter it here</a>.
+      </p>
+    </div>
+  </div>
+</main>
+
+<footer th:replace="~{layout/foot :: foot}"></footer>
+</body>
+</html>

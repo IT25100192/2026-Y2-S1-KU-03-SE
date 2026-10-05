@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout/head :: head('Votes - Admin')}"></head>
+<body>
+<header th:replace="~{layout/head :: topbar}"></header>
+
+<main>
+  <div class="wrap">
+    <div th:replace="~{layout/head :: alerts}"></div>
+
+    <div class="page-head">
+      <div>
+        <h1>Votes</h1>
+        <p class="sub">Every vote cast, including voided ones. Void a vote to remove it from the tally, or delete the record.</p>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:8px;margin-bottom:24px;border-bottom:1px solid var(--line);padding-bottom:12px;flex-wrap:wrap;align-items:center">
+      <a class="btn btn-sm btn-ghost" th:href="@{/admin/rounds}">Rounds</a>
+      <a class="btn btn-sm btn-ghost" th:href="@{/admin/seasons}">Seasons</a>
+      <a class="btn btn-sm btn-ghost" th:href="@{/admin/contestants}">Contestants</a>
+      <a class="btn btn-sm btn-ghost" th:href="@{/admin/users}">Users</a>
+      <a class="btn btn-sm btn-ghost" th:href="@{/admin/audit}">Audit Log</a>
+      <a class="btn btn-sm btn-ghost" th:href="@{/admin/agreements}">Sponsors</a>
+      <a class="btn btn-sm btn-ghost" th:href="@{/admin/payments}">Payments</a>
+      <a class="btn btn-sm btn-ghost" th:href="@{/admin/bundles}">Bundles</a>
+      <a class="btn btn-sm btn-live" th:href="@{/admin/votes}">Votes</a>
+      <a class="btn btn-sm btn-ghost" th:href="@{/admin/notifications}">Notifications</a>
+    </div>
+    <div class="card">
+      <div class="split" style="margin-bottom:16px">
+        <h2>Vote ledger</h2>
+        <span class="faint" th:text="${helpers.number(total) + ' votes'}">0 votes</span>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>ID</th><th>Voter</th><th>Contestant</th><th>Round</th><th>Type</th><th class="right">Votes</th><th>Status</th><th>When</th><th class="right">Actions</th></tr>
+          </thead>
+          <tbody>
+            <tr th:if="${#lists.isEmpty(votes)}">
+              <td colspan="9" class="center muted" style="padding:28px">No votes have been cast yet.</td>
+            </tr>
+            <tr th:each="v : ${votes}">
+              <td class="mono" th:text="${v.id}">1</td>
+              <td th:text="${v.voter != null ? v.voter.fullName : '-'}">Voter</td>
+              <td><b th:text="${v.contestant != null ? v.contestant.displayName : '-'}">Contestant</b></td>
+              <td th:text="${v.round != null ? v.round.name : '-'}">Round 1</td>
+              <td><span class="badge" th:text="${v.voteType}">FREE</span></td>
+              <td class="right"><b th:text="${v.count}">1</b></td>
+              <td>
+                <span th:if="${v.voided}" class="badge bad" th:title="${v.voidReason}">Voided</span>
+                <span th:unless="${v.voided}" class="badge good">Counted</span>
+              </td>
+              <td class="faint nowrap" th:text="${helpers.dateTime(v.createdAt)}">Time</td>
+              <td class="right nowrap">
+                <form th:unless="${v.voided}" method="post" th:action="@{'/admin/votes/' + ${v.id} + '/void'}" style="display:inline-flex;gap:4px"
+                      onsubmit="return confirm('Void this vote and remove it from the tally?');">
+                  <input type="text" name="reason" placeholder="Reason" maxlength="200" style="width:120px;padding:4px 8px;font-size:.8rem" />
+                  <button class="btn btn-ghost btn-sm" style="color:var(--warn)" type="submit">Void</button>
+                </form>
+                <form method="post" th:action="@{'/admin/votes/' + ${v.id} + '/delete'}" style="display:inline"
+                      onsubmit="return confirm('Permanently delete this vote record?');">
+                  <button class="btn btn-ghost btn-sm" style="color:var(--bad)" type="submit">Delete</button>
+                </form>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div th:if="${total > limit}" class="pill-nav" style="margin-top:16px">
+      <a th:each="p : ${#numbers.sequence(1, T(java.lang.Math).ceil(total * 1.0 / limit))}"
+         th:classappend="${p == page ? 'on' : ''}"
+         th:href="@{/admin/votes(page=${p})}" th:text="${p}">1</a>
+    </div>
+  </div>
+</main>
+
+<footer th:replace="~{layout/foot :: foot}"></footer>
+</body>
+</html>

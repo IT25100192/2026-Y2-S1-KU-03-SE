@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout/head :: head('Dashboard')}"></head>
+<body>
+<header th:replace="~{layout/head :: topbar}"></header>
+
+<main>
+  <div class="wrap">
+    <div th:replace="~{layout/head :: alerts}"></div>
+
+    <div class="page-head">
+      <div>
+        <h1>Hello, <span th:text="${currentUser.fullName.split(' ')[0]}">User</span></h1>
+        <p class="sub">
+          <span class="badge" th:classappend="${helpers.tone(currentUser.status.name())}" th:text="${helpers.titleCase(currentUser.status.name())}">Active</span>
+          <span th:text="${helpers.titleCase(currentUser.role.name())} + ' account'">Voter account</span>
+        </p>
+      </div>
+      <a th:if="${round != null and round.status.name() == 'OPEN'}" class="btn btn-live" th:href="@{'/vote/' + ${round.id}}" th:text="'Vote in ' + ${round.name}">Vote in Round</a>
+    </div>
+
+    <div th:if="${currentUser.status.name() != 'ACTIVE'}" class="alert warn">
+      Your account is not verified yet, so you cannot vote or buy credits.
+      <a th:href="@{/verify}">Enter your code</a>.
+    </div>
+
+    <div class="grid four" style="margin-bottom:22px">
+      <div class="card stat">
+        <div class="label">Vote credits</div>
+        <div class="value gold" th:text="${helpers.number(account.balance)}">0</div>
+        <div class="note"><span th:text="${helpers.number(account.lifetimeSpent)}">0</span> spent all time</div>
+      </div>
+      <div class="card stat">
+        <div class="label">Free votes left</div>
+        <div class="value cyan" th:text="${round != null ? helpers.number(freeLeft) : '-'}">5</div>
+        <div class="note" th:text="${round != null ? 'in ' + round.name : 'no open round'}">in Round 1</div>
+      </div>
+      <div class="card stat">
+        <div class="label">Votes cast</div>
+        <div class="value" th:text="${helpers.number(voteCount)}">0</div>
+        <div class="note">across every round</div>
+      </div>
+      <div class="card stat">
+        <div class="label">Unread messages</div>
+        <div class="value magenta" th:text="${helpers.number(unread)}">0</div>
+        <div class="note"><a th:href="@{/my/notifications}">Open inbox</a></div>
+      </div>
+    </div>
+
+    <div class="grid two">
+      <div class="card">
+        <div class="split">
+          <h2>Your recent votes</h2>
+          <a class="faint" th:href="@{/my/votes}">See all</a>
+        </div>
+
+        <div th:if="${#lists.isEmpty(votes)}" class="empty">
+          <p class="muted">You have not voted yet.</p>
+        </div>
+
+        <div th:if="${not #lists.isEmpty(votes)}" class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Contestant</th><th>Round</th><th>Type</th><th class="right">Votes</th><th>When</th></tr>
+            </thead>
+            <tbody>
+              <tr th:each="v : ${votes}">
+                <td><b th:text="${v.contestant != null ? v.contestant.displayName : '-'}">Contestant</b></td>
+                <td th:text="${v.round != null ? v.round.name : '-'}">Round 1</td>
+                <td>
+                  <span class="badge" th:classappend="${v.voteType.name() == 'PAID' ? 'info' : 'muted'}" th:text="${v.voteType}">FREE</span>
+                </td>
+                <td class="right"><b th:text="${v.count}">1</b></td>
+                <td class="faint nowrap" th:text="${helpers.ago(v.createdAt)}">just now</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div>
+        <div class="card">
+          <h2>Quick actions</h2>
+          <div class="btn-row" style="margin-top:10px">
+            <a class="btn btn-ghost btn-sm" th:href="@{/my/wallet}">Wallet</a>
+            <a class="btn btn-ghost btn-sm" th:href="@{/my/payments}">Payments</a>
+            <a class="btn btn-ghost btn-sm" th:href="@{/my/notifications}">Inbox</a>
+            <a class="btn btn-ghost btn-sm" th:href="@{/my/preferences}">Notification settings</a>
+            <a class="btn btn-ghost btn-sm" th:href="@{/profile}">Profile</a>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="split">
+            <h2>Latest messages</h2>
+            <a class="faint" th:href="@{/my/notifications}">Inbox</a>
+          </div>
+          <p class="muted"><a th:href="@{/my/notifications}">View your inbox (<span th:text="${unread}">0</span> unread)</a></p>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<footer th:replace="~{layout/foot :: foot}"></footer>
+</body>
+</html>

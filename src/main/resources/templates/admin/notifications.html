@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout/head :: head('Notification Management - Admin')}"></head>
+<body>
+<header th:replace="~{layout/head :: topbar}"></header>
+
+<main>
+  <div class="wrap">
+    <div th:replace="~{layout/head :: alerts}"></div>
+
+    <div class="page-head">
+      <div>
+        <h1>Notification Management (CRUD)</h1>
+        <p class="sub">Create, view, edit, resend, and delete broadcast alerts, SMS, and email dispatches.</p>
+      </div>
+      <button class="btn btn-primary btn-sm" onclick="document.getElementById('newNoticeCard').style.display = document.getElementById('newNoticeCard').style.display === 'none' ? 'block' : 'none'">+ Create Notification</button>
+    </div>
+
+    <!-- Admin Navigation Tabs -->
+    <div style="display:flex;gap:8px;margin-bottom:24px;border-bottom:1px solid var(--line);padding-bottom:12px;flex-wrap:wrap;align-items:center">
+      <a class="btn btn-sm btn-ghost" th:href="@{/admin/rounds}">Rounds</a>
+      <a class="btn btn-sm btn-ghost" th:href="@{/admin/seasons}">Seasons</a>
+      <a class="btn btn-sm btn-ghost" th:href="@{/admin/contestants}">Contestants</a>
+      <a class="btn btn-sm btn-ghost" th:href="@{/admin/users}">Users</a>
+      <a class="btn btn-sm btn-ghost" th:href="@{/admin/audit}">Audit Log</a>
+      <a class="btn btn-sm btn-ghost" th:href="@{/admin/agreements}">Sponsors</a>
+      <a class="btn btn-sm btn-ghost" th:href="@{/admin/payments}">Payments</a>
+      <a class="btn btn-sm btn-ghost" th:href="@{/admin/bundles}">Bundles</a>
+      <a class="btn btn-sm btn-ghost" th:href="@{/admin/votes}">Votes</a>
+      <a class="btn btn-sm btn-live" th:href="@{/admin/notifications}">Notifications</a>
+      <div style="margin-left:auto">
+        <a class="btn btn-sm btn-ghost" th:href="@{/my/wallet}" style="color:var(--gold)">⚡ Buy Credits</a>
+      </div>
+    </div>
+
+    <!-- Overview Stats -->
+    <div class="grid four" style="margin-bottom:24px">
+      <div class="card stat">
+        <div class="label">Total Dispatched</div>
+        <div class="value gold" th:text="${totalCount}">0</div>
+      </div>
+      <div class="card stat">
+        <div class="label">Delivered / Sent</div>
+        <div class="value green" style="color:var(--good)" th:text="${sentCount}">0</div>
+      </div>
+      <div class="card stat">
+        <div class="label">Failed Delivery</div>
+        <div class="value bad" style="color:var(--bad)" th:text="${failedCount}">0</div>
+      </div>
+      <div class="card stat">
+        <div class="label">Queued / Retrying</div>
+        <div class="value cyan" th:text="${queuedCount}">0</div>
+      </div>
+    </div>
+
+    <!-- [CREATE] Form Drawer -->
+    <div id="newNoticeCard" class="card" style="display:none;margin-bottom:24px;border:1px solid var(--gold)">
+      <div class="split" style="margin-bottom:14px">
+        <h2>Compose New Notification (Create)</h2>
+        <button class="btn btn-ghost btn-sm" onclick="document.getElementById('newNoticeCard').style.display='none'">Cancel</button>
+      </div>
+      <form method="post" th:action="@{/admin/notifications}">
+        <div class="grid two" style="gap:14px">
+          <div class="field">
+            <label for="recipientUserId">Recipient Target</label>
+            <select id="recipientUserId" name="recipientUserId">
+              <option value="">-- Broadcast (All Registered Users) --</option>
+              <option th:each="u : ${users}" th:value="${u.id}" th:text="${u.fullName + ' (' + u.email + ')'}">User Name</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="channel">Dispatch Channel</label>
+            <select id="channel" name="channel" required>
+              <option value="EMAIL" selected>📧 Email</option>
+              <option value="SMS">📱 SMS Message</option>
+              <option value="IN_APP">🔔 In-App Notice</option>
+            </select>
+          </div>
+        </div>
+        <div class="field" style="margin-top:10px">
+          <label for="subject">Notification Subject</label>
+          <input id="subject" name="subject" type="text" placeholder="e.g. Grand Finale Voting is Now Open!" required />
+        </div>
+        <div class="field" style="margin-top:10px">
+          <label for="body">Message Body</label>
+          <textarea id="body" name="body" rows="3" placeholder="Type your notification content here..." required style="width:100%;padding:10px"></textarea>
+        </div>
+        <div style="margin-top:14px;display:flex;gap:10px">
+          <button class="btn btn-primary" type="submit">Dispatch Notification</button>
+          <button class="btn btn-ghost" type="button" onclick="document.getElementById('newNoticeCard').style.display='none'">Close</button>
+        </div>
+      </form>
+    </div>
+
+    <!-- [READ] Search & Filters -->
+    <form method="get" th:action="@{/admin/notifications}" style="display:flex;gap:10px;align-items:center;margin-bottom:20px;flex-wrap:wrap">
+      <input type="text" name="search" th:value="${search}" placeholder="Search subject, body, or email..." style="max-width:300px;padding:8px 12px;" />
+      <select name="channel" style="width:auto;padding:8px 10px;">
+        <option value="">All Channels</option>
+        <option value="EMAIL" th:selected="${selectedChannel == 'EMAIL'}">📧 Email</option>
+        <option value="SMS" th:selected="${selectedChannel == 'SMS'}">📱 SMS</option>
+        <option value="IN_APP" th:selected="${selectedChannel == 'IN_APP'}">🔔 In-App</option>
+      </select>
+      <select name="status" style="width:auto;padding:8px 10px;">
+        <option value="">All Statuses</option>
+        <option value="SENT" th:selected="${selectedStatus == 'SENT'}">Sent / Delivered</option>
+        <option value="FAILED" th:selected="${selectedStatus == 'FAILED'}">Failed</option>
+        <option value="QUEUED" th:selected="${selectedStatus == 'QUEUED'}">Queued</option>
+      </select>
+      <button class="btn btn-primary btn-sm" type="submit">🔍 Search</button>
+      <a th:if="${(search != null and !search.isEmpty()) or (selectedChannel != null and !selectedChannel.equals('ALL')) or (selectedStatus != null and !selectedStatus.equals('ALL'))}" class="btn btn-ghost btn-sm" th:href="@{/admin/notifications}">Clear</a>
+    </form>
+
+    <div class="card">
+      <div class="split" style="margin-bottom:16px">
+        <div style="display:flex;align-items:center;gap:10px">
+          <h2 style="margin:0">Notification Log</h2>
+          <span class="faint" th:text="${notifications != null ? #lists.size(notifications) + ' notifications' : '0'}">0 notifications</span>
+        </div>
+        <form th:if="${failedCount > 0}" method="post" th:action="@{/admin/notifications/clear-failed}" onsubmit="return confirm('Purge all failed notification records?');">
+          <button class="btn btn-ghost btn-sm" style="color:var(--bad)" type="submit">Clear All Failed</button>
+        </form>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Channel</th>
+              <th>Recipient</th>
+              <th>Subject & Message Body</th>
+              <th>Status</th>
+              <th>Attempts</th>
+              <th>Dispatched</th>
+              <th class="right">CRUD Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr th:if="${notifications == null or #lists.isEmpty(notifications)}">
+              <td colspan="8" class="center muted" style="padding:28px">No notifications match this filter.</td>
+            </tr>
+            <tr th:each="n : ${notifications}">
+              <td class="mono" th:text="${n.id}">1</td>
+              <td>
+                <span class="badge" th:classappend="${n.channel.name() == 'EMAIL' ? 'tier' : (n.channel.name() == 'SMS' ? 'gold' : 'muted')}" th:text="${n.channel}">EMAIL</span>
+              </td>
+              <td>
+                <span th:if="${n.broadcast}" class="badge tier" style="background:#5522aa">Broadcast (All)</span>
+                <span th:if="${!n.broadcast and n.user != null}">
+                  <strong th:text="${n.user.fullName}">Kevin</strong>
+                  <div class="faint mono" style="font-size:0.75rem" th:text="${n.user.email}">user@starvoice.lk</div>
+                </span>
+                <span th:if="${!n.broadcast and n.user == null}" class="faint">System</span>
+              </td>
+              <td>
+                <strong th:text="${n.subject}">Round Opened</strong>
+                <div class="faint" style="font-size:0.8rem;max-width:360px;white-space:normal;line-height:1.3" th:text="${n.body}">Voting is now live...</div>
+              </td>
+              <td>
+                <span class="badge" th:classappend="${helpers.tone(n.status.name())}" th:text="${helpers.titleCase(n.status.name())}">SENT</span>
+              </td>
+              <td class="mono faint" th:text="${n.attempts}">1</td>
+              <td class="faint nowrap" th:text="${helpers.dateTime(n.createdAt)}">14 Sep 2026, 12:00</td>
+              <td class="right" style="white-space:nowrap">
+                <!-- [UPDATE] Resend Action -->
+                <form method="post" th:action="@{'/admin/notifications/' + ${n.id} + '/resend'}" style="display:inline-block;margin:0 2px">
+                  <button class="btn btn-ghost btn-sm" style="color:var(--cyan)" type="submit" title="Resend Notification">Resend</button>
+                </form>
+
+                <!-- [UPDATE] Edit Action (Modal trigger) -->
+                <button class="btn btn-ghost btn-sm" type="button" style="color:var(--gold);margin:0 2px"
+                        th:data-id="${n.id}"
+                        th:data-subject="${n.subject}"
+                        th:data-body="${n.body}"
+                        th:data-status="${n.status.name()}"
+                        onclick="openEditModal(this.getAttribute('data-id'), this.getAttribute('data-subject'), this.getAttribute('data-body'), this.getAttribute('data-status'))">
+                  Edit
+                </button>
+
+                <!-- [DELETE] Delete Action -->
+                <form method="post" th:action="@{'/admin/notifications/' + ${n.id} + '/delete'}" style="display:inline-block;margin:0 2px" onsubmit="return confirm('Are you sure you want to permanently delete this notification record?');">
+                  <button class="btn btn-ghost btn-sm" style="color:var(--bad)" type="submit">Delete</button>
+                </form>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<!-- [UPDATE] Edit Notification Modal -->
+<div id="editModal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.75);z-index:999;padding:30px 16px;">
+  <div class="card auth-card" style="max-width:520px;margin:50px auto;">
+    <h2>Edit Notification (Update)</h2>
+    <p class="muted" style="margin-bottom:14px">Modify notification content or adjust status.</p>
+    <form id="editForm" method="post" action="">
+      <div class="field">
+        <label for="editSubject">Subject</label>
+        <input id="editSubject" name="subject" type="text" required />
+      </div>
+      <div class="field" style="margin-top:10px">
+        <label for="editBody">Message Body</label>
+        <textarea id="editBody" name="body" rows="3" required style="width:100%;padding:8px"></textarea>
+      </div>
+      <div class="field" style="margin-top:10px">
+        <label for="editStatus">Status</label>
+        <select id="editStatus" name="status">
+          <option value="SENT">Sent / Delivered</option>
+          <option value="QUEUED">Queued / Pending</option>
+          <option value="FAILED">Failed</option>
+        </select>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:16px">
+        <button class="btn btn-primary" type="submit">Save Changes</button>
+        <button class="btn btn-ghost" type="button" onclick="document.getElementById('editModal').style.display='none'">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+function openEditModal(id, subject, body, status) {
+  document.getElementById('editForm').action = '/admin/notifications/' + id + '/edit';
+  document.getElementById('editSubject').value = subject;
+  document.getElementById('editBody').value = body;
+  document.getElementById('editStatus').value = status;
+  document.getElementById('editModal').style.display = 'block';
+}
+</script>
+
+<footer th:replace="~{layout/foot :: foot}"></footer>
+</body>
+</html>

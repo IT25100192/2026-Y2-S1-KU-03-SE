@@ -1,0 +1,452 @@
+### StarVoice Lanka - API requests
+### Group 2026-Y2-S1-KU-03
+###
+### Open this in VS Code with the REST Client extension, or in the JetBrains
+### HTTP client, and click "Send Request" above each block. Run them top to
+### bottom the first time - later requests reuse ids from earlier ones.
+###
+### Start the server first:  npm run seed && npm start
+
+@host = http://localhost:4000/api
+
+### ------------------------------------------------------------------
+### Health check - run this before anything else
+### ------------------------------------------------------------------
+
+GET {{host}}/health
+
+### ------------------------------------------------------------------
+### User Management (UM) - Balasuriya B.A.K.K. IT25100192
+### ------------------------------------------------------------------
+
+### UM01 Register a voter account
+# @name register
+POST {{host}}/users/register
+Content-Type: application/json
+
+{
+  "fullName": "Chamodi Senanayake",
+  "email": "chamodi@example.lk",
+  "mobile": "0771112233",
+  "nic": "200145600789",
+  "password": "voter12345"
+}
+
+### UM03 Verify the account
+### The 6-digit code is printed in the server console by the notification
+### stub - copy it from there into the "code" field below.
+POST {{host}}/users/verify
+Content-Type: application/json
+
+{
+  "email": "chamodi@example.lk",
+  "code": "000000"
+}
+
+### UM02 Log in as a seeded voter
+# @name login
+POST {{host}}/users/login
+Content-Type: application/json
+
+{
+  "email": "voter1@starvoice.lk",
+  "password": "voter12345"
+}
+
+### Capture the token from the login response
+@voterToken = {{login.response.body.data.token}}
+
+### UM02 Log in as the admin
+# @name adminLogin
+POST {{host}}/users/login
+Content-Type: application/json
+
+{
+  "email": "admin@starvoice.lk",
+  "password": "admin12345"
+}
+
+@adminToken = {{adminLogin.response.body.data.token}}
+
+### UM04 View your own profile
+GET {{host}}/users/me
+Authorization: Bearer {{voterToken}}
+
+### UM04 Update your profile
+PATCH {{host}}/users/me
+Authorization: Bearer {{voterToken}}
+Content-Type: application/json
+
+{
+  "fullName": "Nimali Fernando",
+  "mobile": "0779998877"
+}
+
+### UM05 Request a password reset code
+POST {{host}}/users/password/forgot
+Content-Type: application/json
+
+{
+  "email": "voter1@starvoice.lk"
+}
+
+### UM06 List all users (admin only)
+GET {{host}}/users?page=1&limit=10
+Authorization: Bearer {{adminToken}}
+
+### UM06 Suspend an account (admin only)
+### Replace :id with a user id from the list above
+PATCH {{host}}/users/REPLACE_USER_ID/status
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "status": "SUSPENDED"
+}
+
+### ------------------------------------------------------------------
+### Contestant Management (CM) - Siriwardhana W.M.B.B.B. IT25100187
+### ------------------------------------------------------------------
+
+### Current season
+GET {{host}}/rounds/seasons/current
+
+### CM03 List rounds
+# @name rounds
+GET {{host}}/rounds
+
+### Grab the first round id
+@roundId = {{rounds.response.body.data.0._id}}
+
+### Public contestant list
+# @name contestants
+GET {{host}}/contestants
+
+@contestantId = {{contestants.response.body.data.0._id}}
+
+### One contestant
+GET {{host}}/contestants/{{contestantId}}
+
+### CM01 Register a new contestant (admin only)
+POST {{host}}/contestants
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "fullName": "Yasas Karunaratne",
+  "stageName": "Yasas K",
+  "age": 23,
+  "district": "Ratnapura",
+  "bio": "Baila and folk fusion from Ratnapura."
+}
+
+### CM02 Update a contestant (admin only)
+PATCH {{host}}/contestants/{{contestantId}}
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "bio": "Updated during the live show."
+}
+
+### CM03 Create a round (admin only)
+POST {{host}}/rounds
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "name": "Semi Final",
+  "sequence": 2,
+  "advanceCount": 2
+}
+
+### CM03 Set the line-up for a round (admin only, round must be DRAFT)
+POST {{host}}/rounds/REPLACE_ROUND_ID/line-up
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "contestantIds": ["REPLACE_ID_1", "REPLACE_ID_2", "REPLACE_ID_3"]
+}
+
+### CM04 Leaderboard for a round - public
+GET {{host}}/rounds/{{roundId}}/leaderboard
+
+### ------------------------------------------------------------------
+### Payment Management (PM) - Nawarathna I.K.H.G.B. IT25100174
+### ------------------------------------------------------------------
+
+### PM01 Vote bundle price list - public
+GET {{host}}/payments/bundles
+
+### Current credit balance
+GET {{host}}/payments/balance
+Authorization: Bearer {{voterToken}}
+
+### PM02 Buy a bundle - this one succeeds
+# @name purchase
+POST {{host}}/payments/purchase
+Authorization: Bearer {{voterToken}}
+Content-Type: application/json
+
+{
+  "bundleCode": "FAN",
+  "method": "CARD",
+  "card": "4111111111111111"
+}
+
+@paymentId = {{purchase.response.body.data.payment._id}}
+
+### PM02 Buy a bundle - card ending 0000 is the declined path
+POST {{host}}/payments/purchase
+Authorization: Bearer {{voterToken}}
+Content-Type: application/json
+
+{
+  "bundleCode": "STARTER",
+  "method": "CARD",
+  "card": "4111111111110000"
+}
+
+### PM03 Your own transaction history
+GET {{host}}/payments/me
+Authorization: Bearer {{voterToken}}
+
+### PM03 All transactions (admin only)
+GET {{host}}/payments?status=SUCCESS
+Authorization: Bearer {{adminToken}}
+
+### PM05 Receipt
+GET {{host}}/payments/{{paymentId}}/receipt
+Authorization: Bearer {{voterToken}}
+
+### PM04 Refund (admin only, fails if the credits were already spent)
+POST {{host}}/payments/{{paymentId}}/refund
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "reason": "Duplicate purchase reported by the voter"
+}
+
+### ------------------------------------------------------------------
+### Voting Management (VM) - Ahamed M.N.N. IT25100183
+### ------------------------------------------------------------------
+
+### VM02 Check eligibility before voting
+### Tells you the free/paid split and whether the balance covers it
+GET {{host}}/votes/eligibility/{{roundId}}?count=8
+Authorization: Bearer {{voterToken}}
+
+### VM01 Cast a vote
+### This single request touches four modules - see castVote() in
+### src/modules/voting/voting.service.js
+POST {{host}}/votes
+Authorization: Bearer {{voterToken}}
+Content-Type: application/json
+
+{
+  "roundId": "{{roundId}}",
+  "contestantId": "{{contestantId}}",
+  "count": 3
+}
+
+### VM03 Live tally - public. Includes the sponsor banners (SM04)
+GET {{host}}/votes/tally/{{roundId}}
+
+### VM05 Your own voting history
+GET {{host}}/votes/me
+Authorization: Bearer {{voterToken}}
+
+### VM04 Open a round for voting (admin only)
+POST {{host}}/votes/rounds/REPLACE_ROUND_ID/open
+Authorization: Bearer {{adminToken}}
+
+### VM04 Close a round (admin only)
+POST {{host}}/votes/rounds/REPLACE_ROUND_ID/close
+Authorization: Bearer {{adminToken}}
+
+### Full vote ledger for a round (admin only)
+GET {{host}}/votes/rounds/{{roundId}}/ledger
+Authorization: Bearer {{adminToken}}
+
+### Void a vote (admin only)
+POST {{host}}/votes/REPLACE_VOTE_ID/void
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "reason": "Flagged as duplicate during the fraud review"
+}
+
+### CM05 Publish results - close the round first
+POST {{host}}/rounds/REPLACE_ROUND_ID/publish-results
+Authorization: Bearer {{adminToken}}
+
+### ------------------------------------------------------------------
+### Notification Management (NM) - De Silva T.J.T. IT25100158
+### ------------------------------------------------------------------
+
+### NM05 Your in-app notifications
+GET {{host}}/notifications?page=1&limit=10
+Authorization: Bearer {{voterToken}}
+
+### NM05 Unread only
+GET {{host}}/notifications?unread=true
+Authorization: Bearer {{voterToken}}
+
+### NM05 Mark one as read
+PATCH {{host}}/notifications/REPLACE_NOTIFICATION_ID/read
+Authorization: Bearer {{voterToken}}
+
+### NM05 Mark everything as read
+POST {{host}}/notifications/read-all
+Authorization: Bearer {{voterToken}}
+
+### NM04 Current channel preferences
+GET {{host}}/notifications/preferences
+Authorization: Bearer {{voterToken}}
+
+### NM04 Mute SMS but keep email and in-app
+PATCH {{host}}/notifications/preferences
+Authorization: Bearer {{voterToken}}
+Content-Type: application/json
+
+{
+  "sms": false,
+  "announcements": true
+}
+
+### NM03 Broadcast to every active voter (admin only)
+POST {{host}}/notifications/broadcast
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "template": "ROUND_OPENED",
+  "payload": {
+    "roundName": "Semi Final",
+    "closesAt": "Sunday 10pm",
+    "contestantCount": 3
+  }
+}
+
+### ------------------------------------------------------------------
+### Sponsor & Partnership Management (SM) - Weerasinghe W.A.D.S. IT25100176
+### ------------------------------------------------------------------
+
+### SM02 Sponsorship rate card - public
+GET {{host}}/sponsors/packages
+
+### SM02 Create a package (admin only)
+POST {{host}}/sponsors/packages
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "tier": "BRONZE",
+  "name": "Bronze Partner",
+  "priceLKR": 300000,
+  "guaranteedImpressions": 20000,
+  "bannerSlotsPerRound": 1
+}
+
+### SM01 Register a sponsor (admin only)
+# @name sponsor
+POST {{host}}/sponsors
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "companyName": "Lanka Beverages",
+  "industry": "FMCG",
+  "website": "https://example.lk",
+  "contactName": "Dilshan Amarasinghe",
+  "contactEmail": "brand@example.lk",
+  "contactPhone": "0112223344"
+}
+
+@sponsorId = {{sponsor.response.body.data._id}}
+
+### SM01 List sponsors
+GET {{host}}/sponsors
+Authorization: Bearer {{adminToken}}
+
+### SM03 Create an agreement (admin only)
+# @name agreement
+POST {{host}}/sponsors/agreements
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "sponsorId": "{{sponsorId}}",
+  "packageTier": "GOLD",
+  "startsAt": "2026-09-01T00:00:00.000Z",
+  "endsAt": "2026-12-31T00:00:00.000Z",
+  "clickThroughUrl": "https://example.lk/starvoice"
+}
+
+@agreementId = {{agreement.response.body.data._id}}
+
+### SM03 Activate the agreement (admin only)
+POST {{host}}/sponsors/agreements/{{agreementId}}/activate
+Authorization: Bearer {{adminToken}}
+
+### SM03 List agreements
+GET {{host}}/sponsors/agreements?status=ACTIVE
+Authorization: Bearer {{adminToken}}
+
+### SM04 Banners for a round - this is what the vote page calls
+GET {{host}}/sponsors/banners/{{roundId}}
+
+### SM04 Record a click on a banner
+POST {{host}}/sponsors/agreements/{{agreementId}}/click
+
+### SM05 Exposure report - impressions, clicks, cost per impression
+GET {{host}}/sponsors/agreements/{{agreementId}}/report
+Authorization: Bearer {{adminToken}}
+
+### SM06 Terminate an agreement (admin only)
+POST {{host}}/sponsors/agreements/{{agreementId}}/terminate
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "reason": "Sponsor withdrew ahead of the semi final"
+}
+
+### ------------------------------------------------------------------
+### Error paths worth demonstrating in the viva
+### ------------------------------------------------------------------
+
+### Missing token
+GET {{host}}/users/me
+
+### Voter hitting an admin-only endpoint
+GET {{host}}/users
+Authorization: Bearer {{voterToken}}
+
+### Validation failure - short password, bad mobile format
+POST {{host}}/users/register
+Content-Type: application/json
+
+{
+  "fullName": "AB",
+  "email": "not-an-email",
+  "mobile": "12345",
+  "password": "123"
+}
+
+### Voting for a contestant who is not in the round
+POST {{host}}/votes
+Authorization: Bearer {{voterToken}}
+Content-Type: application/json
+
+{
+  "roundId": "{{roundId}}",
+  "contestantId": "000000000000000000000000",
+  "count": 1
+}
+
+### Route that does not exist
+GET {{host}}/nonsense

@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout/head :: head('Contestants - Admin')}"></head>
+<body>
+<header th:replace="~{layout/head :: topbar}"></header>
+
+<main>
+  <div class="wrap">
+    <div th:replace="~{layout/head :: alerts}"></div>
+
+    <div class="page-head">
+      <div>
+        <h1>Contestants Management</h1>
+        <p class="sub">Register new performers, monitor overall vote totals, and oversee competition standing.</p>
+      </div>
+      <a class="btn btn-ghost btn-sm" th:href="@{/contestants}">Public Contestants Page</a>
+    </div>
+
+    <div style="display:flex;gap:8px;margin-bottom:24px;border-bottom:1px solid var(--line);padding-bottom:12px;flex-wrap:wrap;align-items:center">
+      <a class="btn btn-sm btn-ghost" th:href="@{/admin/rounds}">Rounds</a>
+      <a class="btn btn-sm btn-ghost" th:href="@{/admin/seasons}">Seasons</a>
+      <a class="btn btn-sm btn-live" th:href="@{/admin/contestants}">Contestants</a>
+      <a class="btn btn-sm btn-ghost" th:href="@{/admin/users}">Users</a>
+      <a class="btn btn-sm btn-ghost" th:href="@{/admin/audit}">Audit Log</a>
+      <a class="btn btn-sm btn-ghost" th:href="@{/admin/agreements}">Sponsors</a>
+      <a class="btn btn-sm btn-ghost" th:href="@{/admin/payments}">Payments</a>
+      <a class="btn btn-sm btn-ghost" th:href="@{/admin/bundles}">Bundles</a>
+      <a class="btn btn-sm btn-ghost" th:href="@{/admin/votes}">Votes</a>
+      <a class="btn btn-sm btn-ghost" th:href="@{/admin/notifications}">Notifications</a>
+      <div style="margin-left:auto">
+        <a class="btn btn-sm btn-ghost" th:href="@{/my/wallet}" style="color:var(--gold)">⚡ Buy Credits</a>
+      </div>
+    </div>
+
+    <!-- Register Contestant Form Card -->
+    <div class="card" style="margin-bottom:28px">
+      <h3>Register New Contestant</h3>
+      <form method="post" th:action="@{/admin/contestants}">
+        <div class="inline">
+          <div class="field">
+            <label>Full Legal Name</label>
+            <input type="text" name="fullName" placeholder="e.g. Kasun Fernando" required />
+          </div>
+          <div class="field">
+            <label>Stage / Display Name</label>
+            <input type="text" name="stageName" placeholder="e.g. Kasun F" />
+          </div>
+          <div class="field" style="max-width:110px">
+            <label>Age</label>
+            <input type="number" name="age" min="16" max="99" value="21" />
+          </div>
+          <div class="field">
+            <label>District</label>
+            <input type="text" name="district" placeholder="e.g. Kandy" required />
+          </div>
+          <button class="btn btn-primary btn-sm" type="submit" style="margin-bottom:0;height:42px">Register Contestant</button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Contestants Table -->
+    <div class="card">
+      <div class="split" style="margin-bottom:16px">
+        <h2>Active & Registered Contestants</h2>
+        <span class="faint" th:text="${contestants != null ? #lists.size(contestants) + ' contestants' : '0'}">5 contestants</span>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Contestant</th>
+              <th>District</th>
+              <th>Age</th>
+              <th>Season</th>
+              <th>Lifetime Votes</th>
+              <th>Status</th>
+              <th class="right">Profile</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr th:each="c : ${contestants}">
+              <td class="mono" th:text="${c.id}">1</td>
+              <td>
+                <strong th:text="${c.displayName}">Amaya</strong>
+                <small class="muted" style="display:block" th:text="${c.fullName}">Amaya Weeratunga</small>
+              </td>
+              <td th:text="${c.district}">Kandy</td>
+              <td th:text="${c.age != null ? c.age : '-'}">22</td>
+              <td class="faint" th:text="${c.season != null ? c.season.name : '-'}">Season 3</td>
+              <td>
+                <strong class="gold" th:text="${helpers.number(c.totalVotes)}">120</strong>
+              </td>
+              <td>
+                <span class="badge" th:classappend="${helpers.tone(c.status.name())}" th:text="${helpers.titleCase(c.status.name())}">ACTIVE</span>
+              </td>
+              <td class="right" style="white-space:nowrap">
+                <a class="btn btn-ghost btn-sm" style="color:var(--gold);margin:0 2px" th:href="@{'/admin/contestants/' + ${c.id} + '/edit'}">Edit</a>
+                <form th:if="${c.status.name() == 'ACTIVE'}" method="post" th:action="@{'/admin/contestants/' + ${c.id} + '/status'}" style="display:inline-block;margin:0 2px">
+                  <input type="hidden" name="status" value="ELIMINATED" />
+                  <button class="btn btn-ghost btn-sm" style="color:var(--bad)" type="submit" onclick="return confirm('Mark contestant as eliminated?')">Eliminate</button>
+                </form>
+                <form th:if="${c.status.name() != 'ACTIVE'}" method="post" th:action="@{'/admin/contestants/' + ${c.id} + '/status'}" style="display:inline-block;margin:0 2px">
+                  <input type="hidden" name="status" value="ACTIVE" />
+                  <button class="btn btn-ghost btn-sm" style="color:var(--good)" type="submit">Activate</button>
+                </form>
+                <form method="post" th:action="@{'/admin/contestants/' + ${c.id} + '/delete'}" style="display:inline-block;margin:0 2px" onsubmit="return confirm('Permanently delete contestant ' + [[${c.displayName}]] + ' and all entries?');">
+                  <button class="btn btn-ghost btn-sm" style="color:var(--bad)" type="submit">Delete</button>
+                </form>
+                <a class="btn btn-ghost btn-sm" th:href="@{'/contestants/' + ${c.id}}" target="_blank">View &rarr;</a>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<footer th:replace="~{layout/foot :: foot}"></footer>
+</body>
+</html>

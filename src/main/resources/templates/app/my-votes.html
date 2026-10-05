@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout/head :: head('My votes')}"></head>
+<body>
+<header th:replace="~{layout/head :: topbar}"></header>
+
+<main>
+  <div class="wrap">
+    <div th:replace="~{layout/head :: alerts}"></div>
+
+    <div class="page-head">
+      <div>
+        <h1>My votes</h1>
+        <p class="sub"><span th:text="${helpers.number(total)}">0</span> vote submission(s) across every round.</p>
+      </div>
+    </div>
+
+    <div th:if="${#lists.isEmpty(items)}" class="card empty">
+      <h3>You have not voted yet</h3>
+      <p>Once a round is open, cast your first vote from the dashboard.</p>
+      <a class="btn btn-primary" style="margin-top:10px" th:href="@{/dashboard}">Go to dashboard</a>
+    </div>
+
+    <div th:if="${not #lists.isEmpty(items)}" class="card">
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Contestant</th><th>Round</th><th>Type</th><th class="right">Votes</th><th>When</th><th class="right">Actions</th></tr>
+          </thead>
+          <tbody>
+            <tr th:each="v : ${items}">
+              <td><b th:text="${v.contestant != null ? v.contestant.displayName : '-'}">Contestant</b></td>
+              <td th:text="${v.round != null ? v.round.name : '-'}">Round 1</td>
+              <td><span class="badge" th:classappend="${v.voteType.name() == 'PAID' ? 'info' : 'muted'}" th:text="${v.voteType}">FREE</span></td>
+              <td class="right"><b th:text="${v.count}">1</b></td>
+              <td class="faint nowrap" th:text="${helpers.dateTime(v.createdAt)}">Time</td>
+              <td class="right nowrap">
+                <span th:if="${v.round == null or v.round.status.name() != 'OPEN'}" class="faint">Locked</span>
+                <th:block th:if="${v.round != null and v.round.status.name() == 'OPEN'}">
+                  <a class="btn btn-ghost btn-sm" th:href="@{'/my/votes/' + ${v.id} + '/change'}">Change</a>
+                  <form method="post" th:action="@{'/my/votes/' + ${v.id} + '/withdraw'}" style="display:inline"
+                        onsubmit="return confirm('Withdraw this vote? Credits and free votes are returned.');">
+                    <button class="btn btn-ghost btn-sm" style="color:var(--bad)" type="submit">Withdraw</button>
+                  </form>
+                </th:block>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div th:if="${total > limit}" class="pill-nav" style="margin-top:16px">
+      <a th:each="p : ${#numbers.sequence(1, T(java.lang.Math).ceil(total * 1.0 / limit))}"
+         th:classappend="${p == page ? 'on' : ''}"
+         th:href="@{/my/votes(page=${p})}"
+         th:text="${p}">1</a>
+    </div>
+  </div>
+</main>
+
+<footer th:replace="~{layout/foot :: foot}"></footer>
+</body>
+</html>

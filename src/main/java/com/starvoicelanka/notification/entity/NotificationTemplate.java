@@ -1,0 +1,16 @@
+package com.starvoicelanka.notification.entity;
+
+public enum NotificationTemplate {
+    ACCOUNT_VERIFICATION,
+    PASSWORD_RESET,
+    VOTE_CONFIRMATION,
+    PAYMENT_RECEIPT,
+    REFUND_ISSUED,
+    ROUND_OPENED,
+    ELIMINATION_NOTICE,
+    SPONSOR_AGREEMENT,
+    FRAUD_ALERT,
+    AGREEMENT_RENEWED,
+    SPONSOR_INVOICE,
+    GENERAL_ANNOUNCEMENT
+}

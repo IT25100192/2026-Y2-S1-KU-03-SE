@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout/head :: head('Payments')}"></head>
+<body>
+<header th:replace="~{layout/head :: topbar}"></header>
+
+<main>
+  <div class="wrap">
+    <div th:replace="~{layout/head :: alerts}"></div>
+
+    <div class="page-head">
+      <div>
+        <h1>Payment history</h1>
+        <p class="sub"><span th:text="${helpers.number(total)}">0</span> transaction(s).</p>
+      </div>
+      <a class="btn btn-ghost" th:href="@{/my/wallet}">Buy more credits</a>
+    </div>
+
+    <div th:if="${#lists.isEmpty(items)}" class="card empty">
+      <h3>No payments yet</h3>
+      <p>Bought credits will show up here with a receipt.</p>
+    </div>
+
+    <div th:if="${not #lists.isEmpty(items)}" class="card">
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Receipt</th><th>Bundle</th><th class="right">Amount</th><th>Method</th><th>Status</th><th>When</th><th></th></tr>
+          </thead>
+          <tbody>
+            <tr th:each="p : ${items}">
+              <td class="mono" th:text="${p.receiptNo}">SVL-2026-0001</td>
+              <td th:text="${p.bundle != null ? p.bundle.name : '-'}">Bundle</td>
+              <td class="right"><b th:text="${helpers.money(p.amountLKR)}">LKR 500</b></td>
+              <td th:text="${p.method}">CARD</td>
+              <td><span class="badge" th:classappend="${helpers.tone(p.status.name())}" th:text="${helpers.titleCase(p.status.name())}">Success</span></td>
+              <td class="faint nowrap" th:text="${helpers.dateTime(p.createdAt)}">Time</td>
+              <td><a class="faint" th:href="@{'/my/payments/' + ${p.id} + '/receipt'}">Receipt</a></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div th:if="${total > limit}" class="pill-nav" style="margin-top:16px">
+      <a th:each="p : ${#numbers.sequence(1, T(java.lang.Math).ceil(total * 1.0 / limit))}"
+         th:classappend="${p == page ? 'on' : ''}"
+         th:href="@{/my/payments(page=${p})}"
+         th:text="${p}">1</a>
+    </div>
+  </div>
+</main>
+
+<footer th:replace="~{layout/foot :: foot}"></footer>
+</body>
+</html>

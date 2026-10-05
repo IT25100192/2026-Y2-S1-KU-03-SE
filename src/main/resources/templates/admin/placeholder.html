@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout/head :: head(${section})}"></head>
+<body>
+<header th:replace="~{layout/head :: topbar}"></header>
+
+<main>
+  <div class="wrap">
+    <div th:replace="~{layout/head :: alerts}"></div>
+
+    <div class="page-head">
+      <div>
+        <h1 th:text="${section}">Section</h1>
+        <p class="sub">This screen's data is wired up; the dedicated layout is not built yet.</p>
+      </div>
+      <a class="btn btn-ghost btn-sm" th:href="@{/admin}">Show control</a>
+    </div>
+
+    <div class="alert info">
+      This is a scaffold page - see HANDOFF.md item 2. The route already calls
+      the real service function below; turning this into a proper table or form
+      is a template-only change.
+    </div>
+
+    <div th:if="${data != null}" class="card">
+      <pre class="mono" style="white-space:pre-wrap;font-size:.82rem;line-height:1.5" th:text="${data}">Data</pre>
+    </div>
+    <div th:if="${data == null}" class="card empty">
+      <h3>No data wired up yet</h3>
+      <p>This section still needs its service call written in.</p>
+    </div>
+  </div>
+</main>
+
+<footer th:replace="~{layout/foot :: foot}"></footer>
+</body>
+</html>
