@@ -12,7 +12,7 @@ import java.util.Optional;
 public interface SeasonRepository extends JpaRepository<Season, Long> {
     Optional<Season> findByIsCurrentTrue();
 
-    @Modifying
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
     @Query("UPDATE Season s SET s.isCurrent = false WHERE s.isCurrent = true")
     void unsetCurrentSeasons();
 }

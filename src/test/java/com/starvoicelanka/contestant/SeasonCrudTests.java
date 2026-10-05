@@ -2,7 +2,11 @@ package com.starvoicelanka.contestant;
 
 import com.starvoicelanka.common.exception.ConflictException;
 import com.starvoicelanka.contestant.entity.Season;
+import com.starvoicelanka.contestant.entity.Round;
+import com.starvoicelanka.contestant.entity.RoundStatus;
+import com.starvoicelanka.contestant.repository.RoundRepository;
 import com.starvoicelanka.contestant.service.ContestantService;
+import com.starvoicelanka.voting.service.VotingService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -20,6 +24,12 @@ class SeasonCrudTests {
     @Autowired
     private ContestantService contestantService;
 
+    @Autowired
+    private VotingService votingService;
+
+    @Autowired
+    private RoundRepository roundRepository;
+
     @Test
     void createUpdateAndDeleteSeason() {
         Season created = contestantService.createSeason("Test Season", 2027, false);
@@ -34,7 +44,22 @@ class SeasonCrudTests {
     }
 
     @Test
+    void cannotSwitchSeasonWhileRoundIsOpen() {
+        // seed data leaves a round OPEN in the current season
+        Season other = contestantService.createSeason("Another Season", 2027, false);
+        assertThatThrownBy(() -> contestantService.setCurrentSeason(other.getId()))
+                .isInstanceOf(ConflictException.class);
+    }
+
+    @Test
     void switchingCurrentSeasonKeepsOnlyOneCurrent() {
+        Season current = contestantService.getCurrentSeason();
+        for (Round r : roundRepository.findBySeasonIdOrderBySequenceAsc(current.getId())) {
+            if (r.getStatus() == RoundStatus.OPEN) {
+                votingService.closeRound(r.getId());
+            }
+        }
+
         Season other = contestantService.createSeason("Another Season", 2027, false);
         contestantService.setCurrentSeason(other.getId());
 
