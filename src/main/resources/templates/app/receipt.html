@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout/head :: head('Receipt ' + ${receipt.receiptNo})}"></head>
+<body>
+<header th:replace="~{layout/head :: topbar}"></header>
+
+<main>
+  <div class="wrap">
+    <div th:replace="~{layout/head :: alerts}"></div>
+
+    <div class="page-head">
+      <div>
+        <h1 th:text="'Receipt ' + ${receipt.receiptNo}">Receipt</h1>
+        <p class="sub" th:text="'Issued ' + ${helpers.dateTime(receipt.issuedAt)}">Issued date</p>
+      </div>
+      <a class="btn btn-ghost" th:href="@{'/my/payments/' + ${paymentId} + '/receipt.pdf'}" target="_blank">Download PDF</a>
+    </div>
+
+    <div class="card" style="max-width:520px">
+      <div class="split">
+        <h2>Billed to</h2>
+        <span class="badge" th:classappend="${helpers.tone(receipt.status.name())}" th:text="${helpers.titleCase(receipt.status.name())}">Status</span>
+      </div>
+      <div class="kv"><span>Name</span><b th:text="${receipt.billedTo.name}">Name</b></div>
+      <div class="kv"><span>Email</span><b th:text="${receipt.billedTo.email}">Email</b></div>
+      <div class="kv"><span>Mobile</span><b th:text="${receipt.billedTo.mobile}">Mobile</b></div>
+
+      <h2 style="margin-top:18px">Line item</h2>
+      <div class="kv">
+        <span th:text="${receipt.lineItem.description}">Description</span>
+        <b th:text="${helpers.money(receipt.lineItem.amountLKR)}">LKR 500</b>
+      </div>
+
+      <h2 style="margin-top:18px">Payment</h2>
+      <div class="kv"><span>Method</span><b th:text="${receipt.method}">CARD</b></div>
+      <div class="kv"><span>Reference</span><b class="mono" th:text="${receipt.reference}">REF</b></div>
+    </div>
+
+    <div class="btn-row" style="margin-top:16px">
+      <a class="btn btn-ghost btn-sm" th:href="@{/my/payments}">Back to payments</a>
+    </div>
+  </div>
+</main>
+
+<footer th:replace="~{layout/foot :: foot}"></footer>
+</body>
+</html>
