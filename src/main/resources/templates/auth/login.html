@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout/head :: head('Sign in')}"></head>
+<body>
+<header th:replace="~{layout/head :: topbar}"></header>
+
+<main>
+  <div class="wrap">
+    <div th:replace="~{layout/head :: alerts}"></div>
+
+    <div class="card auth-card">
+      <h1 style="font-size:1.5rem">Sign in</h1>
+      <p class="muted">Use the email you registered with.</p>
+
+      <form method="post" th:action="@{/login}">
+        <input type="hidden" name="next" th:value="${next}">
+        <div class="field">
+          <label for="email">Email</label>
+          <input id="email" name="email" type="email" required autofocus>
+        </div>
+        <div class="field">
+          <label for="password">Password</label>
+          <input id="password" name="password" type="password" required>
+        </div>
+        <button class="btn btn-primary" style="width:100%" type="submit">Sign in</button>
+      </form>
+
+      <p class="faint" style="margin-top:16px">
+        <a th:href="@{/forgot}">Forgotten your password?</a><br>
+        No account yet? <a th:href="@{/register}">Create one</a>.<br>
+        Registered but not verified? <a th:href="@{/verify}">Enter your code</a>.
+      </p>
+    </div>
+  </div>
+</main>
+
+<footer th:replace="~{layout/foot :: foot}"></footer>
+</body>
+</html>

@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout/head :: head('Set a new password')}"></head>
+<body>
+<header th:replace="~{layout/head :: topbar}"></header>
+
+<main>
+  <div class="wrap">
+    <div th:replace="~{layout/head :: alerts}"></div>
+
+    <div class="card auth-card">
+      <h1 style="font-size:1.5rem">Set a new password</h1>
+
+      <form method="post" th:action="@{/reset}">
+        <div class="field">
+          <label for="email">Email</label>
+          <input id="email" name="email" type="email" th:value="${email}" required>
+        </div>
+        <div class="field">
+          <label for="code">Reset code</label>
+          <input id="code" name="code" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" required>
+        </div>
+        <div class="field">
+          <label for="newPassword">New password</label>
+          <input id="newPassword" name="newPassword" type="password" minlength="8" required>
+        </div>
+        <button class="btn btn-primary" style="width:100%" type="submit">Change password</button>
+      </form>
+    </div>
+  </div>
+</main>
+
+<footer th:replace="~{layout/foot :: foot}"></footer>
+</body>
+</html>

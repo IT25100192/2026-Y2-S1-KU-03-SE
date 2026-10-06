@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout/head :: head('Verify your account')}"></head>
+<body>
+<header th:replace="~{layout/head :: topbar}"></header>
+
+<main>
+  <div class="wrap">
+    <div th:replace="~{layout/head :: alerts}"></div>
+
+    <div class="card auth-card">
+      <h1 style="font-size:1.5rem">Verify your account</h1>
+      <p class="muted">We sent a 6-digit code. It is valid for 15 minutes.</p>
+      <div th:if="${devCode}" class="alert ok" style="margin-bottom:1rem;">
+        🔑 <strong>Development Code:</strong> Your verification code is <strong style="font-size:1.25rem; letter-spacing:2px; background:rgba(255,255,255,0.85); padding:2px 8px; border-radius:4px; color:#111; margin-left:6px;" th:text="${devCode}">123456</strong>
+      </div>
+
+      <div th:unless="${devCode}" class="alert info">
+        In this build the notification provider logs instead of sending, so the
+        code is printed in the server console. Look for a line starting
+        <span class="mono">[notify:</span>.
+      </div>
+
+      <form method="post" th:action="@{/verify}">
+        <div class="field">
+          <label for="email">Email</label>
+          <input id="email" name="email" type="email" th:value="${email}" required>
+        </div>
+        <div class="field">
+          <label for="code">Verification code</label>
+          <input id="code" name="code" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" required>
+        </div>
+        <button class="btn btn-primary" style="width:100%" type="submit">Verify and sign in</button>
+      </form>
+
+      <form method="post" th:action="@{/verify/resend}" style="margin-top:12px">
+        <input type="hidden" name="email" th:value="${email}">
+        <button class="btn btn-ghost btn-sm" style="width:100%" type="submit">Send me a new code</button>
+      </form>
+    </div>
+  </div>
+</main>
+
+<footer th:replace="~{layout/foot :: foot}"></footer>
+</body>
+</html>
