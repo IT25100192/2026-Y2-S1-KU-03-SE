@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout/head :: head('Agreement Details - Admin')}"></head>
+<body>
+<header th:replace="~{layout/head :: topbar}"></header>
+
+<main>
+  <div class="wrap">
+    <div th:replace="~{layout/head :: alerts}"></div>
+
+    <div class="page-head">
+      <div>
+        <a class="faint" th:href="@{/admin/agreements}" style="font-size:0.85rem">&larr; Back to Agreements</a>
+        <h1 th:text="'Agreement ' + ${agreement.agreementNo}">SVL-AGR-2026-001</h1>
+        <p class="sub">
+          <strong th:text="${agreement.sponsor != null ? agreement.sponsor.companyName : 'Sponsor'}">Dialog Axiata</strong> &bull;
+          <span class="badge tier" th:text="${agreement.packageRef != null ? agreement.packageRef.tier : 'PARTNER'}">GOLD</span> &bull;
+          Status: <span class="badge" th:classappend="${helpers.tone(agreement.status.name())}" th:text="${helpers.titleCase(agreement.status.name())}">ACTIVE</span>
+        </p>
+      </div>
+      <div style="display:flex;gap:8px">
+        <form th:if="${agreement.status.name() == 'DRAFT'}" method="post" th:action="@{'/admin/agreements/' + ${agreement.id} + '/activate'}">
+          <input type="hidden" name="from" value="detail" />
+          <button class="btn btn-live btn-sm" type="submit">Activate</button>
+        </form>
+        <button th:if="${agreement.status.name() == 'ACTIVE'}" class="btn btn-primary btn-sm" onclick="document.getElementById('renewModal').style.display='block'">Renew with Uplift</button>
+        <form th:if="${agreement.status.name() == 'ACTIVE'}" method="post" th:action="@{'/admin/agreements/' + ${agreement.id} + '/terminate'}" onsubmit="return confirmTerminate(this);">
+          <input type="hidden" name="reason" value="Terminated by admin" />
+          <button class="btn btn-ghost btn-sm" style="color:var(--bad)" type="submit">Terminate</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Financial Summary Cards -->
+    <div class="grid five" style="margin-bottom:24px">
+      <div class="card stat">
+        <div class="label">Contract Value</div>
+        <div class="value gold" th:text="${helpers.money(financials.contractValueLKR())}">LKR 0</div>
+      </div>
+      <div class="card stat">
+        <div class="label">Invoiced</div>
+        <div class="value" th:text="${helpers.money(financials.invoicedLKR())}">LKR 0</div>
+      </div>
+      <div class="card stat">
+        <div class="label">Collected (Paid)</div>
+        <div class="value green" style="color:var(--good)" th:text="${helpers.money(financials.collectedLKR())}">LKR 0</div>
+      </div>
+      <div class="card stat">
+        <div class="label">Outstanding Due</div>
+        <div class="value cyan" th:text="${helpers.money(financials.outstandingLKR())}">LKR 0</div>
+      </div>
+      <div class="card stat">
+        <div class="label">Unbilled Balance</div>
+        <div class="value faint" th:text="${helpers.money(financials.unbilledLKR())}">LKR 0</div>
+      </div>
+    </div>
+
+    <div class="grid two" style="gap:24px;margin-bottom:24px">
+      <!-- Exposure & Deliverables -->
+      <div class="card">
+        <h2>Impression Delivery & Reach</h2>
+        <div class="grid two" style="margin-top:14px;gap:12px">
+          <div class="kv"><span>Delivered Impressions</span><b th:text="${exposure != null ? helpers.number(exposure.deliveredImpressions()) : 0}">0</b></div>
+          <div class="kv"><span>Guaranteed Minimum</span><b th:text="${agreement.packageRef != null ? helpers.number(agreement.packageRef.guaranteedImpressions) : '-'}">50,000</b></div>
+          <div class="kv"><span>Fulfilment Rate</span><b th:text="${exposure != null and exposure.fulfilmentRate() != null ? exposure.fulfilmentRate() + '%' : '100%'}">100%</b></div>
+          <div class="kv"><span>Click-Through Rate (CTR)</span><b th:text="${exposure != null ? exposure.clickThroughRate() + '%' : '0.0%'}">0.0%</b></div>
+        </div>
+        <div style="margin-top:16px;padding-top:12px;border-top:1px solid var(--line)">
+          <div class="kv"><span>Banner Asset URL</span><a class="mono faint" th:if="${agreement.bannerImageUrl != null}" th:href="${agreement.bannerImageUrl}" target="_blank" th:text="${agreement.bannerImageUrl}">View Asset</a><span th:if="${agreement.bannerImageUrl == null}">None set</span></div>
+          <div class="kv"><span>Click-Through URL</span><a class="mono faint" th:if="${agreement.clickThroughUrl != null}" th:href="${agreement.clickThroughUrl}" target="_blank" th:text="${agreement.clickThroughUrl}">Visit Link</a><span th:if="${agreement.clickThroughUrl == null}">Default Website</span></div>
+        </div>
+      </div>
+
+      <!-- Quick Issue Invoice Card -->
+      <div class="card">
+        <h2>Issue Commercial Invoice</h2>
+        <p class="muted" style="font-size:0.85rem">Raise an invoice against the unbilled contract amount.</p>
+        <form method="post" th:action="@{'/admin/agreements/' + ${agreement.id} + '/invoices'}" style="margin-top:12px">
+          <div class="field">
+            <label for="amountLKR">Invoice Amount (LKR)</label>
+            <input id="amountLKR" name="amountLKR" type="number" step="1000" min="1" th:value="${financials != null and financials.unbilledLKR() > 0 ? financials.unbilledLKR() : 100000}" required />
+          </div>
+          <div class="field">
+            <label for="description">Invoice Description / Reference</label>
+            <input id="description" name="description" type="text" th:value="'Milestone Payment - Agreement ' + ${agreement.agreementNo}" required />
+          </div>
+          <button class="btn btn-primary btn-sm" type="submit" style="width:100%;margin-top:8px">Generate & Dispatch Invoice</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Invoices Ledger -->
+    <div class="card">
+      <div class="split" style="margin-bottom:16px">
+        <h2>Invoices Issued Under This Agreement</h2>
+        <span class="faint" th:text="${financials != null and financials.invoices() != null ? #lists.size(financials.invoices()) + ' invoices' : '0 invoices'}">0 invoices</span>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Invoice No</th>
+              <th>Description</th>
+              <th>Amount</th>
+              <th>Issued</th>
+              <th>Due Date</th>
+              <th>Status</th>
+              <th class="right">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr th:if="${financials == null or financials.invoices() == null or #lists.isEmpty(financials.invoices())}">
+              <td colspan="7" class="center muted" style="padding:28px">No invoices raised yet.</td>
+            </tr>
+            <tr th:each="inv : ${financials != null ? financials.invoices() : {}}">
+              <td class="mono font-bold" th:text="${inv.invoiceNo}">SVL-INV-2026-1001</td>
+              <td th:text="${inv.description}">Quarter 1 Sponsorship</td>
+              <td><strong th:text="${helpers.money(inv.amountLKR)}">LKR 600,000</strong></td>
+              <td class="faint nowrap" th:text="${helpers.date(inv.issuedAt)}">14 Sep 2026</td>
+              <td class="faint nowrap" th:text="${helpers.date(inv.dueAt)}">14 Oct 2026</td>
+              <td>
+                <span class="badge" th:classappend="${helpers.tone(inv.status.name())}" th:text="${helpers.titleCase(inv.status.name())}">ISSUED</span>
+              </td>
+              <td class="right" style="white-space:nowrap">
+                <form th:if="${inv.status.name() != 'PAID' and inv.status.name() != 'CANCELLED'}" method="post" th:action="@{'/admin/invoices/' + ${inv.id} + '/pay'}" style="display:inline-block">
+                  <input type="hidden" name="agreementId" th:value="${agreement.id}" />
+                  <input type="hidden" name="paymentRef" value="BANK-DIRECT" />
+                  <button class="btn btn-ghost btn-sm" style="color:var(--good)" type="submit" onclick="return confirm('Record payment for this invoice?')">Mark as Paid</button>
+                </form>
+                <span th:if="${inv.status.name() == 'PAID'}" class="faint mono" style="font-size:0.75rem">Settled</span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<!-- Renew Modal (Simple Div) -->
+<div id="renewModal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);z-index:999;padding:40px 16px;">
+  <div class="card auth-card" style="max-width:480px;margin:60px auto;">
+    <h2>Renew Agreement</h2>
+    <p class="muted" style="margin-bottom:14px">Renew this partnership contract with an automatic valuation uplift percentage.</p>
+    <form method="post" th:action="@{'/admin/agreements/' + ${agreement.id} + '/renew'}">
+      <div class="field">
+        <label for="upliftPercent">Uplift Percentage (%)</label>
+        <input id="upliftPercent" name="upliftPercent" type="number" step="0.5" min="0" value="10.0" required />
+      </div>
+      <div style="display:flex;gap:10px;margin-top:16px">
+        <button class="btn btn-primary" type="submit">Confirm Renewal</button>
+        <button class="btn btn-ghost" type="button" onclick="document.getElementById('renewModal').style.display='none'">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+function confirmTerminate(form) {
+  var reason = prompt("Reason for terminating this sponsorship contract:", "Mutual termination");
+  if (!reason) return false;
+  form.reason.value = reason;
+  return true;
+}
+</script>
+
+<footer th:replace="~{layout/foot :: foot}"></footer>
+</body>
+</html>
