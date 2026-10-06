@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout/head :: head('Seasons - Admin')}"></head>
+<body>
+<header th:replace="~{layout/head :: topbar}"></header>
+
+<main>
+  <div class="wrap">
+    <div th:replace="~{layout/head :: alerts}"></div>
+
+    <div class="page-head">
+      <div>
+        <h1>Seasons</h1>
+        <p class="sub">A season holds its own rounds and contestants. The current season is the one shown on the Rounds page.</p>
+      </div>
+      <a class="btn btn-live btn-sm" th:href="@{/admin/rounds}">Go to Rounds</a>
+    </div>
+
+    <div style="display:flex;gap:8px;margin-bottom:24px;border-bottom:1px solid var(--line);padding-bottom:12px;flex-wrap:wrap;align-items:center">
+      <a class="btn btn-sm btn-ghost" th:href="@{/admin/rounds}">Rounds</a>
+      <a class="btn btn-sm btn-live" th:href="@{/admin/seasons}">Seasons</a>
+      <a class="btn btn-sm btn-ghost" th:href="@{/admin/contestants}">Contestants</a>
+      <a class="btn btn-sm btn-ghost" th:href="@{/admin/users}">Users</a>
+      <a class="btn btn-sm btn-ghost" th:href="@{/admin/audit}">Audit Log</a>
+      <a class="btn btn-sm btn-ghost" th:href="@{/admin/agreements}">Sponsors</a>
+      <a class="btn btn-sm btn-ghost" th:href="@{/admin/payments}">Payments</a>
+      <a class="btn btn-sm btn-ghost" th:href="@{/admin/bundles}">Bundles</a>
+      <a class="btn btn-sm btn-ghost" th:href="@{/admin/votes}">Votes</a>
+      <a class="btn btn-sm btn-ghost" th:href="@{/admin/notifications}">Notifications</a>
+      <div style="margin-left:auto">
+        <a class="btn btn-sm btn-ghost" th:href="@{/my/wallet}" style="color:var(--gold)">⚡ Buy Credits</a>
+      </div>
+    </div>
+
+    <!-- Create Season -->
+    <div class="card" style="margin-bottom:28px">
+      <h3>Create Season</h3>
+      <form method="post" th:action="@{/admin/seasons}">
+        <div class="inline">
+          <div class="field">
+            <label>Season Name</label>
+            <input type="text" name="name" placeholder="e.g. StarVoice Lanka Season 4" required minlength="2" maxlength="120" />
+          </div>
+          <div class="field">
+            <label>Year</label>
+            <input type="number" name="year" value="2026" min="2000" max="2100" required />
+          </div>
+        </div>
+        <label style="display:block;margin:8px 0">
+          <input type="checkbox" name="makeCurrent" value="true" /> Make this the current season
+        </label>
+        <button class="btn btn-primary btn-sm" type="submit">Create Season</button>
+      </form>
+    </div>
+
+    <!-- Seasons Table -->
+    <div class="card">
+      <div class="split" style="margin-bottom:16px">
+        <h2>All Seasons</h2>
+        <span class="faint" th:text="${#lists.size(rows) + ' season(s)'}">1 season</span>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Year</th>
+              <th>Status</th>
+              <th>Rounds</th>
+              <th>Contestants</th>
+              <th class="right">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr th:if="${#lists.isEmpty(rows)}">
+              <td colspan="6" class="center muted" style="padding:28px">No seasons yet. Create one above.</td>
+            </tr>
+            <tr th:each="row : ${rows}">
+              <td><strong th:text="${row.season.name}">Season 3</strong></td>
+              <td class="mono" th:text="${row.season.year}">2026</td>
+              <td>
+                <span class="badge good" th:if="${row.season.current}">Current</span>
+                <span class="badge" th:unless="${row.season.current}">Inactive</span>
+              </td>
+              <td th:text="${row.rounds}">3</td>
+              <td th:text="${row.contestants}">5</td>
+              <td class="right" style="white-space:nowrap">
+                <form th:unless="${row.season.current}" method="post" th:action="@{'/admin/seasons/' + ${row.season.id} + '/current'}" style="display:inline-block;margin:0 2px">
+                  <button class="btn btn-live btn-sm" type="submit" onclick="return confirm('Make this the current season?')">Make Current</button>
+                </form>
+
+                <details style="display:inline-block;margin:0 2px;text-align:left;vertical-align:middle">
+                  <summary class="btn btn-ghost btn-sm" style="cursor:pointer">Edit</summary>
+                  <form method="post" th:action="@{'/admin/seasons/' + ${row.season.id} + '/edit'}" style="margin-top:8px">
+                    <div class="field">
+                      <label>Name</label>
+                      <input type="text" name="name" th:value="${row.season.name}" required minlength="2" maxlength="120" />
+                    </div>
+                    <div class="field">
+                      <label>Year</label>
+                      <input type="number" name="year" th:value="${row.season.year}" min="2000" max="2100" required />
+                    </div>
+                    <button class="btn btn-primary btn-sm" type="submit">Save</button>
+                  </form>
+                </details>
+
+                <form method="post" th:action="@{'/admin/seasons/' + ${row.season.id} + '/delete'}" style="display:inline-block;margin:0 2px" onsubmit="return confirm('Delete season ' + [[${row.season.name}]] + '?');">
+                  <button class="btn btn-ghost btn-sm" style="color:var(--bad)" type="submit">Delete</button>
+                </form>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="faint" style="margin-top:12px">A season can only be deleted if it is not current and has no rounds or contestants. Switching season is blocked while a round is open.</p>
+    </div>
+
+  </div>
+</main>
+
+<footer th:replace="~{layout/foot :: foot}"></footer>
+</body>
+</html>
