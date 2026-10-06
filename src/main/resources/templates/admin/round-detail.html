@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout/head :: head('Round Details - Admin')}"></head>
+<body>
+<header th:replace="~{layout/head :: topbar}"></header>
+
+<main>
+  <div class="wrap">
+    <div th:replace="~{layout/head :: alerts}"></div>
+
+    <div class="page-head">
+      <div>
+        <p class="faint" style="margin-bottom:4px"><a th:href="@{/admin/rounds}">&larr; Back to all rounds</a></p>
+        <h1 th:text="${round.name}">Quarter Final 1</h1>
+        <p class="sub">Round Line-up, contestant standings, and performance media control.</p>
+      </div>
+      <div>
+        <span class="badge" th:classappend="${helpers.tone(round.status.name())}" th:text="${helpers.titleCase(round.status.name())}" style="font-size:.9rem;padding:6px 14px">OPEN</span>
+      </div>
+    </div>
+
+    <!-- Actions Bar -->
+    <div class="card" style="margin-bottom:24px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+      <div style="display:flex;gap:16px;align-items:center">
+        <div><span>Sequence:</span> <strong th:text="${round.sequence}">1</strong></div>
+        <div><span>Advance count:</span> <strong th:text="${round.advanceCount}">3</strong></div>
+        <div><span>Voting open:</span> <strong th:text="${round.votingOpen ? 'Yes' : 'No'}">Yes</strong></div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <form th:if="${round.status.name() == 'DRAFT'}" method="post" th:action="@{'/admin/rounds/' + ${round.id} + '/open'}">
+          <button class="btn btn-live btn-sm" type="submit" onclick="return confirm('Open voting for this round?')">Open Round</button>
+        </form>
+        <form th:if="${round.status.name() == 'OPEN'}" method="post" th:action="@{'/admin/rounds/' + ${round.id} + '/close'}">
+          <button class="btn btn-sm" style="background:var(--warn);color:#111;font-weight:700" type="submit" onclick="return confirm('Close voting for this round?')">Close Round</button>
+        </form>
+        <form th:if="${round.status.name() == 'CLOSED'}" method="post" th:action="@{'/admin/rounds/' + ${round.id} + '/publish'}">
+          <button class="btn btn-live btn-sm" type="submit" onclick="return confirm('Publish results and eliminate non-advancing contestants?')">Publish Results</button>
+        </form>
+        <a class="btn btn-ghost btn-sm" th:href="@{/results}">View Public Leaderboard</a>
+      </div>
+    </div>
+
+    <!-- Edit round (draft only) -->
+    <div class="card" style="margin-bottom:24px" th:if="${round.status.name() == 'DRAFT'}">
+      <h3>Edit round</h3>
+      <form method="post" th:action="@{'/admin/rounds/' + ${round.id} + '/edit'}">
+        <div class="inline">
+          <div class="field"><label>Round name</label>
+            <input type="text" name="name" th:value="${round.name}" required maxlength="120" /></div>
+          <div class="field" style="max-width:120px"><label>Order</label>
+            <input type="number" name="sequence" th:value="${round.sequence}" min="1" required /></div>
+          <div class="field" style="max-width:150px"><label>Advance count</label>
+            <input type="number" name="advanceCount" th:value="${round.advanceCount}" min="0" required /></div>
+          <button class="btn btn-primary btn-sm" type="submit" style="height:42px">Save round</button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Line-up Table -->
+    <div class="card" style="margin-bottom:28px">
+      <div class="split" style="margin-bottom:16px">
+        <h2>Contestants in this Round</h2>
+        <span class="faint" th:text="${entries != null ? #lists.size(entries) + ' in line-up' : '0'}">5 in line-up</span>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Rank</th>
+              <th>Contestant</th>
+              <th>District</th>
+              <th>Votes in Round</th>
+              <th>Outcome</th>
+              <th>Performance Media</th>
+              <th class="right">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr th:if="${entries == null or #lists.isEmpty(entries)}">
+              <td colspan="7" class="center muted" style="padding:28px">No contestants assigned to this round yet.</td>
+            </tr>
+            <tr th:each="e, stat : ${entries}">
+              <td class="bold" th:text="${stat.index + 1}">1</td>
+              <td>
+                <strong th:text="${e.contestant.displayName}">Amaya</strong>
+                <small class="muted" style="display:block" th:text="${e.contestant.fullName}">Amaya Weeratunga</small>
+              </td>
+              <td th:text="${e.contestant.district}">Kandy</td>
+              <td>
+                <span class="bold gold" th:text="${helpers.number(e.votesInRound)}">120</span>
+              </td>
+              <td>
+                <span class="badge" th:classappend="${helpers.tone(e.outcome)}" th:text="${helpers.titleCase(e.outcome)}">PENDING</span>
+              </td>
+              <td>
+                <span th:if="${e.mediaUrl != null}">
+                  <a th:href="${e.mediaUrl}" target="_blank" class="btn btn-ghost btn-sm" style="padding:2px 8px">Watch Clip</a>
+                  <small class="faint" th:text="${e.performanceTitle}">(Title)</small>
+                </span>
+                <span th:if="${e.mediaUrl == null}" class="faint">No clip uploaded</span>
+              </td>
+              <td class="right">
+                <form th:if="${round.status.name() == 'DRAFT'}" method="post" th:action="@{'/admin/rounds/' + ${round.id} + '/contestants/' + ${e.contestant.id} + '/remove'}" style="display:inline-block;margin-right:6px" onsubmit="return confirm('Remove this contestant from the line-up?');">
+                  <button class="btn btn-ghost btn-sm" style="color:var(--bad);padding:4px 8px" type="submit">Remove</button>
+                </form>
+                <!-- Upload Clip Form inline -->
+                <form th:if="${round.status.name() != 'RESULTS_PUBLISHED'}" method="post" th:action="@{'/admin/rounds/' + ${round.id} + '/contestants/' + ${e.contestant.id} + '/media'}" enctype="multipart/form-data" style="display:inline-flex;gap:6px;align-items:center">
+                  <input type="text" name="performanceTitle" placeholder="Song title" style="width:120px;padding:4px 8px;font-size:.8rem" />
+                  <input type="file" name="media" required style="width:150px;padding:2px;font-size:.75rem" />
+                  <button class="btn btn-ghost btn-sm" type="submit" style="padding:4px 8px">Upload</button>
+                </form>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Add Contestant to Line-up (if Draft) -->
+    <div class="card" th:if="${round.status.name() == 'DRAFT' and availableContestants != null and not #lists.isEmpty(availableContestants)}">
+      <h3>Assign Contestants to this Round</h3>
+      <p class="faint">Select active registered contestants from this season to add them to this round's competition line-up.</p>
+      <form method="post" th:action="@{'/admin/rounds/' + ${round.id} + '/assign'}">
+        <div style="display:flex;gap:16px;flex-wrap:wrap;margin:14px 0">
+          <label th:each="c : ${availableContestants}" class="check" style="margin-right:12px">
+            <input type="checkbox" name="contestantIds" th:value="${c.id}" />
+            <span th:text="${c.displayName} + ' (' + ${c.district} + ')'">Amaya (Kandy)</span>
+          </label>
+        </div>
+        <button class="btn btn-primary btn-sm" type="submit">Update Line-up</button>
+      </form>
+    </div>
+
+  </div>
+</main>
+
+<footer th:replace="~{layout/foot :: foot}"></footer>
+</body>
+</html>
