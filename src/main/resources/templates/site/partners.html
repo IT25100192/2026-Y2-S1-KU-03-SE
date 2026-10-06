@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout/head :: head('Partners')}"></head>
+<body>
+<header th:replace="~{layout/head :: topbar}"></header>
+
+<main>
+  <div class="wrap">
+    <div th:replace="~{layout/head :: alerts}"></div>
+
+    <div class="page-head">
+      <div>
+        <h1>Partner with the show</h1>
+        <p class="sub">Sponsorship tiers, what each one carries, and what gets reported back.</p>
+      </div>
+    </div>
+
+    <div class="grid three">
+      <div th:each="p : ${packages}" class="card">
+        <div class="split">
+          <h2 th:text="${p.name}">Package Name</h2>
+          <span class="badge tier" th:text="${p.tier}">TITLE</span>
+        </div>
+        <div class="value gold" style="font-size:1.7rem;font-weight:800;margin:8px 0" th:text="${helpers.money(p.priceLKR)}">LKR 1,500,000</div>
+        <div class="kv"><span>Guaranteed impressions</span><b th:text="${helpers.number(p.guaranteedImpressions)}">100,000</b></div>
+        <div class="kv"><span>Banner slots per round</span><b th:text="${p.bannerSlotsPerRound}">2</b></div>
+        <div class="kv"><span>Logo on leaderboard</span><b th:text="${p.logoOnLeaderboard ? 'Yes' : 'No'}">Yes</b></div>
+        <div class="kv"><span>Naming rights</span><b th:text="${p.namingRights ? 'Yes' : 'No'}">No</b></div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:20px">
+      <h3>Reporting</h3>
+      <p class="muted">
+        Every banner served is logged as a single impression against the agreement,
+        with the round it ran in. Partners get delivered against guaranteed, the
+        click-through rate and a cost per impression - measured, not estimated.
+      </p>
+      <p class="faint">Sponsorship enquiries go to the partnerships desk through the show's contact address.</p>
+    </div>
+  </div>
+</main>
+
+<footer th:replace="~{layout/foot :: foot}"></footer>
+</body>
+</html>
