@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout/head :: head('Notifications')}"></head>
+<body>
+<header th:replace="~{layout/head :: topbar}"></header>
+
+<main>
+  <div class="wrap">
+    <div th:replace="~{layout/head :: alerts}"></div>
+
+    <div class="page-head">
+      <div>
+        <h1>Notifications</h1>
+        <p class="sub">
+          <span th:text="${unread}">0</span> unread of
+          <span th:text="${helpers.number(total)}">0</span> total.
+        </p>
+      </div>
+      <form th:if="${unread > 0}" method="post" th:action="@{/my/notifications/read-all}">
+        <button class="btn btn-ghost btn-sm" type="submit">Mark all read</button>
+      </form>
+    </div>
+
+    <div th:if="${#lists.isEmpty(items)}" class="card empty">
+      <h3>Nothing here yet</h3>
+      <p>Vote confirmations, receipts and show announcements will land in this inbox.</p>
+    </div>
+
+    <div th:if="${not #lists.isEmpty(items)}" class="card" style="padding:0">
+      <div th:each="n, stat : ${items}" class="row"
+           style="padding:16px 18px;"
+           th:styleappend="${stat.index > 0 ? 'border-top:1px solid var(--line);' : ''}">
+        <div style="flex:1">
+          <div class="split">
+            <b th:text="${n.subject}">Subject</b>
+            <span th:if="${n.readAt == null}" class="badge info">New</span>
+          </div>
+          <p class="muted" style="margin:4px 0 0" th:text="${n.body}">Body</p>
+          <p class="faint" style="margin:6px 0 0" th:text="${helpers.ago(n.createdAt)}">time</p>
+        </div>
+        <form th:if="${n.readAt == null}" method="post" th:action="@{'/my/notifications/' + ${n.id} + '/read'}">
+          <button class="btn btn-ghost btn-sm" type="submit">Mark read</button>
+        </form>
+      </div>
+    </div>
+
+    <div th:if="${total > limit}" class="pill-nav" style="margin-top:16px">
+      <a th:each="p : ${#numbers.sequence(1, T(java.lang.Math).ceil(total * 1.0 / limit))}"
+         th:classappend="${p == page ? 'on' : ''}"
+         th:href="@{/my/notifications(page=${p})}"
+         th:text="${p}">1</a>
+    </div>
+  </div>
+</main>
+
+<footer th:replace="~{layout/foot :: foot}"></footer>
+</body>
+</html>

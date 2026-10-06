@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout/head :: head('Notification preferences')}"></head>
+<body>
+<header th:replace="~{layout/head :: topbar}"></header>
+
+<main>
+  <div class="wrap">
+    <div th:replace="~{layout/head :: alerts}"></div>
+
+    <div class="page-head">
+      <div>
+        <h1>Notification preferences</h1>
+        <p class="sub">Choose how StarVoice Lanka reaches you.</p>
+      </div>
+    </div>
+
+    <div class="card" style="max-width:520px">
+      <form method="post" th:action="@{/my/preferences}">
+        <div class="check">
+          <input id="email" name="email" type="checkbox" th:checked="${prefs != null and prefs.email}">
+          <div>
+            <label for="email">Email</label>
+            <div class="hint">Receipts, password resets, elimination notices.</div>
+          </div>
+        </div>
+        <div class="check">
+          <input id="sms" name="sms" type="checkbox" th:checked="${prefs != null and prefs.sms}">
+          <div>
+            <label for="sms">SMS</label>
+            <div class="hint">Verification codes and time-sensitive alerts.</div>
+          </div>
+        </div>
+        <div class="check">
+          <input id="inApp" name="inApp" type="checkbox" th:checked="${prefs != null and prefs.inApp}">
+          <div>
+            <label for="inApp">In-app</label>
+            <div class="hint">Shows up in your notifications inbox.</div>
+          </div>
+        </div>
+        <div class="check">
+          <input id="announcements" name="announcements" type="checkbox" th:checked="${prefs != null and prefs.announcements}">
+          <div>
+            <label for="announcements">Show announcements</label>
+            <div class="hint">Broadcasts sent to every voter, e.g. a new round opening.</div>
+          </div>
+        </div>
+        <button class="btn btn-primary" style="width:100%" type="submit">Save preferences</button>
+      </form>
+    </div>
+  </div>
+</main>
+
+<footer th:replace="~{layout/foot :: foot}"></footer>
+</body>
+</html>
