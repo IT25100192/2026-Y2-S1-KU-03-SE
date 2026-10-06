@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout/head :: head(${tally.round.name})}"></head>
+<body>
+<header th:replace="~{layout/head :: topbar}"></header>
+
+<main>
+  <div class="wrap">
+    <div th:replace="~{layout/head :: alerts}"></div>
+
+    <div class="page-head" th:attr="data-refresh=${tally.round.status.name() == 'OPEN' ? '20' : null}">
+      <div>
+        <div th:if="${tally.round.status.name() == 'OPEN'}" class="onair"><span class="pulse"></span>Live</div>
+        <h1 th:text="${tally.round.name}">Round Name</h1>
+        <p class="sub">
+          <span class="badge" th:classappend="${helpers.tone(tally.round.status.name())}" th:text="${helpers.titleCase(tally.round.status.name())}">Status</span>
+          <span th:if="${tally.round.closesAt != null}" th:text="' &middot; closes ' + ${helpers.dateTime(tally.round.closesAt)}"> &middot; closes date</span>
+          <span th:if="${tally.round.status.name() == 'OPEN'}">&middot; this page refreshes itself</span>
+        </p>
+      </div>
+      <div class="btn-row">
+        <a th:if="${tally.round.status.name() == 'OPEN'}" class="btn btn-live" th:href="@{'/vote/' + ${tally.round.id}}">Cast your votes</a>
+      </div>
+    </div>
+
+    <div class="grid four" style="margin-bottom:22px">
+      <div class="card stat"><div class="label">Total votes</div><div class="value gold" th:text="${helpers.number(tally.breakdown.totalVotes)}">0</div></div>
+      <div class="card stat"><div class="label">Unique voters</div><div class="value" th:text="${helpers.number(tally.breakdown.uniqueVoters)}">0</div></div>
+      <div class="card stat"><div class="label">Free votes</div><div class="value cyan" th:text="${helpers.number(tally.breakdown.freeVotes)}">0</div></div>
+      <div class="card stat"><div class="label">Paid votes</div><div class="value magenta" th:text="${helpers.number(tally.breakdown.paidVotes)}">0</div></div>
+    </div>
+
+    <div class="grid two">
+      <div class="card">
+        <h2>Standings</h2>
+        <div th:replace="~{partials/board :: board(${tally.standings}, ${tally.round.status.name() == 'OPEN' ? tally.round.id : null})}"></div>
+      </div>
+      <div>
+        <div th:replace="~{partials/sponsors :: sponsors(${tally.sponsors})}"></div>
+        <div class="card">
+          <h2>About this round</h2>
+          <div class="kv"><span>Status</span><b th:text="${helpers.titleCase(tally.round.status.name())}">Status</b></div>
+          <div class="kv"><span>Contestants</span><b th:text="${#lists.size(tally.standings)}">0</b></div>
+          <div class="kv"><span>Votes cast</span><b th:text="${helpers.number(tally.totalVotes)}">0</b></div>
+          <p class="faint" style="margin-top:14px">
+            Paid votes are votes bought with credits. They count exactly the same as
+            a free vote - the split is shown because the show publishes it, not
+            because one is worth more than the other.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<footer th:replace="~{layout/foot :: foot}"></footer>
+</body>
+</html>
