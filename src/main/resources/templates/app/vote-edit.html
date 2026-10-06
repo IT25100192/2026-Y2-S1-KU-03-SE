@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout/head :: head('Change vote')}"></head>
+<body>
+<header th:replace="~{layout/head :: topbar}"></header>
+
+<main>
+  <div class="wrap">
+    <div th:replace="~{layout/head :: alerts}"></div>
+
+    <div class="page-head">
+      <div>
+        <h1>Change my vote</h1>
+        <p class="sub">Move this vote to a different contestant while the round is still open.</p>
+      </div>
+      <a class="btn btn-ghost btn-sm" th:href="@{/my/votes}">Back to my votes</a>
+    </div>
+
+    <div class="card" style="max-width:560px">
+      <div class="kv"><span>Round</span><b th:text="${vote.round.name}">Round 1</b></div>
+      <div class="kv"><span>Currently voting for</span><b th:text="${vote.contestant.displayName}">Contestant</b></div>
+      <div class="kv"><span>Votes in this entry</span><b th:text="${vote.count}">1</b></div>
+
+      <form method="post" th:action="@{'/my/votes/' + ${vote.id} + '/change'}" style="margin-top:16px">
+        <div class="field">
+          <label>New contestant</label>
+          <select name="contestantId" required>
+            <option value="">Choose a contestant</option>
+            <option th:each="e : ${entries}"
+                    th:if="${e.contestant.id != vote.contestant.id}"
+                    th:value="${e.contestant.id}"
+                    th:text="${e.contestant.displayName}">Contestant</option>
+          </select>
+        </div>
+        <button class="btn btn-primary" type="submit">Save change</button>
+      </form>
+    </div>
+  </div>
+</main>
+
+<footer th:replace="~{layout/foot :: foot}"></footer>
+</body>
+</html>
